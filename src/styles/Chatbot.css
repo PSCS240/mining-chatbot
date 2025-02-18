@@ -1,0 +1,84 @@
+/* Chatbot Container */
+.chatbot-container {
+  width: 90%;
+  max-width: 600px;
+  margin: 50px auto;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 20px;
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Chat Title */
+.chatbot-container h1 {
+  font-size: 2rem;
+  color: #ffffff;
+  margin-bottom: 15px;
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+/* Input Field */
+.chatbot-container textarea {
+  width: calc(100% - 20px);
+  height: 80px;
+  padding: 12px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  outline: none;
+  transition: 0.3s;
+  resize: none;
+}
+
+.chatbot-container textarea::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.chatbot-container textarea:focus {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.03);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* Ask Button */
+.ask-btn {
+  margin-top: 12px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(135deg, #ff6f61, #ff3b3b);
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.ask-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #ff3b3b, #ff6f61);
+}
+
+.ask-btn:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+/* Chat Response */
+.response-box {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 1rem;
+  min-height: 50px;
+}
