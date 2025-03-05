@@ -1,0 +1,169 @@
+/* Apply background animation to the entire page */
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(135deg, #1d2b53 0%, #2d3142 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Background Animation */
+body::before {
+  content: '';
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.04) 10%, transparent 10.01%);
+  background-size: 60px 60px;
+  animation: rotateBackground 30s linear infinite;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Keyframe for background animation */
+@keyframes rotateBackground {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Login Container */
+.auth-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 450px;
+  background: rgba(20, 20, 40, 0.35);
+  backdrop-filter: blur(15px);
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0px 12px 25px rgba(0, 0, 0, 0.45);
+  text-align: center;
+  animation: fadeIn 1s ease-in-out;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Title */
+.auth-title {
+  color: #e0e0e0;
+  font-size: 2.2rem;
+  font-weight: bold;
+  margin-bottom: 25px;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Input Fields */
+.auth-container input {
+  width: 100%;
+  padding: 16px;
+  margin: 15px 0;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
+  outline: none;
+  transition: all 0.3s ease-in-out;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+.auth-container input:focus {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.03);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+}
+
+/* Password Input with Visibility Button */
+.password-container {
+  position: relative;
+  width: 100%;
+}
+
+.password-container input {
+  padding-right: 50px;
+}
+
+.view-password-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #e0e0e0;
+  font-size: 1.4rem;
+  cursor: pointer;
+  outline: none;
+}
+
+/* Login Button */
+.auth-btn {
+  width: 100%;
+  padding: 16px;
+  margin-top: 25px;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.3);
+}
+
+.auth-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(135deg, #fad0c4, #ff9a9e);
+}
+
+.auth-btn:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+/* Error Message */
+.error-message {
+  margin-top: 15px;
+  color: #ff6b6b;
+  font-size: 1rem;
+  font-weight: bold;
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 500px) {
+  .auth-container {
+    max-width: 90%;
+    padding: 30px;
+  }
+
+  .auth-title {
+    font-size: 1.8rem;
+  }
+
+  .auth-btn {
+    font-size: 1.1rem;
+  }
+}
