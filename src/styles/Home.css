@@ -1,8 +1,8 @@
 /* General Styles */
 body {
     margin: 0;
-    font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #020c1b 0%, #0a192f 50%, #172a45 100%);
+    font-family: 'Poppins', sans-serif;
+    background: #010a19;
     color: white;
     overflow: hidden;
     display: flex;
@@ -12,7 +12,77 @@ body {
     position: relative;
 }
 
-/* Dark Overlay for Better Contrast */
+/* Background Slideshow with Parallax Effect */
+.mining-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 110%;
+    height: 110vh;
+    z-index: -1;
+    overflow: hidden;
+    animation: parallax 10s infinite alternate ease-in-out;
+}
+
+.mining-background img {
+    position: absolute;
+    width: 100%;
+    height: 100vh;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 2s ease-in-out, transform 6s ease-in-out;
+    transform: scale(1.15);
+}
+
+/* Active Background */
+.mining-background img.active {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Parallax Effect */
+@keyframes parallax {
+    from { transform: translateY(0px); }
+    to { transform: translateY(-20px); }
+}
+
+/* Particle Animation */
+.particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -2;
+    pointer-events: none;
+}
+
+.particles div {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    opacity: 0;
+    animation: floatParticle 8s infinite ease-in-out;
+}
+
+@keyframes floatParticle {
+    0% {
+        opacity: 0;
+        transform: translateY(0) translateX(0);
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(-150px) translateX(50px);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-300px) translateX(-100px);
+    }
+}
+
+/* Gradient Overlay with Animation */
 body::before {
     content: '';
     position: absolute;
@@ -20,50 +90,78 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.4); /* Darker Overlay */
+    background: linear-gradient(45deg, rgba(0, 0, 0, 0.5), rgba(1, 10, 25, 0.8));
     z-index: 0;
+    animation: gradientShift 6s infinite alternate;
+}
+
+@keyframes gradientShift {
+    0% { background: rgba(0, 0, 0, 0.5); }
+    100% { background: rgba(1, 10, 25, 0.85); }
 }
 
 /* Home Container */
 .home-container {
     text-align: center;
-    animation: fadeIn 2s ease-in-out;
     position: relative;
     z-index: 2;
+    padding: 20px;
+    animation: fadeIn 2s ease-in-out;
 }
 
-.home-container h1 {
-    font-size: 3rem;
-    color: #fff;
-    animation: slideInFromTop 1.5s ease-in-out;
-    margin-bottom: 20px;
-    text-shadow: 2px 2px 10px rgba(255, 255, 255, 0.3);
+/* Heading with Glow Effect */
+h1 {
+    font-size: 3.8rem;
+    font-weight: bold;
+    text-shadow: 0px 0px 35px rgba(0, 174, 255, 0.8);
+    background: linear-gradient(90deg, #00d4ff, #00ff88);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: textGlow 3s infinite alternate;
 }
 
-.home-container p {
-    font-size: 1.5rem;
-    color: #ddd;
-    margin-top: 15px;
-    animation: fadeIn 3s ease-in-out;
+@keyframes textGlow {
+    0% { text-shadow: 0px 0px 10px rgba(0, 174, 255, 0.6); }
+    100% { text-shadow: 0px 0px 30px rgba(0, 255, 136, 0.9); }
 }
 
-/* Button Styling */
+/* Subtitle */
+p {
+    font-size: 1.6rem;
+    opacity: 0.85;
+    margin-top: -10px;
+}
+
+/* Mining Icon Animation */
+.mining-icons {
+    width: 120px;
+    opacity: 0.9;
+    animation: floating 3s infinite ease-in-out;
+}
+
+@keyframes floating {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+/* Button Container */
 .home-buttons {
     margin-top: 30px;
     display: flex;
     justify-content: center;
-    gap: 20px;
+    gap: 25px;
     animation: slideInFromBottom 1.5s ease-in-out;
 }
 
+/* Button Styles */
 .btn {
     text-decoration: none;
-    padding: 15px 30px;
-    font-size: 1.2rem;
-    color: #fff;
-    border-radius: 25px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    padding: 14px 36px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: white;
+    border-radius: 30px;
+    transition: all 0.4s ease;
     position: relative;
     overflow: hidden;
     z-index: 1;
@@ -71,70 +169,59 @@ body::before {
     cursor: pointer;
 }
 
-/* Button Hover Glow Effect */
+/* Button Colors */
+.login { 
+    background: linear-gradient(135deg, #007bff, #00c3ff);
+    box-shadow: 0 0 30px rgba(0, 123, 255, 0.5);
+}
+
+.register { 
+    background: linear-gradient(135deg, #28a745, #00ff88);
+    box-shadow: 0 0 30px rgba(40, 167, 69, 0.5);
+}
+
+/* Button Hover Effects */
 .btn:hover {
     transform: translateY(-5px);
-    box-shadow: 0 6px 10px rgba(255, 255, 255, 0.2);
-    animation: pulseGlow 1.5s infinite alternate;
+    box-shadow: 0 0 40px rgba(255, 255, 255, 0.7);
+    animation: pulseGlow 1s infinite alternate;
 }
 
+/* Pulse Glow Effect */
 @keyframes pulseGlow {
-    0% {
-        box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-    }
-    100% {
-        box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-    }
+    0% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.4); }
+    100% { box-shadow: 0 0 40px rgba(255, 255, 255, 0.8); }
 }
 
-.btn.login {
-    background: #ff6f61;
+/* Sliding Animation */
+@keyframes slideInFromBottom {
+    from { opacity: 0; transform: translateY(50px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.btn.register {
-    background: #4CAF50;
+/* Fade In Animation */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
-/* Background Animation */
-@keyframes moveBackground {
-    from {
-        transform: translateY(0);
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+    h1 {
+        font-size: 2.5rem;
     }
-    to {
-        transform: translateY(-30px);
-    }
-}
 
-@keyframes rotateBackground {
-    from {
-        transform: rotate(0deg);
+    p {
+        font-size: 1.2rem;
     }
-    to {
-        transform: rotate(360deg);
-    }
-}
 
-/* Glowing Effect for Container */
-.home-container::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 350px;
-    height: 350px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.08), transparent);
-    transform: translate(-50%, -50%);
-    animation: glow 3s infinite alternate;
-    z-index: -1;
-}
-
-@keyframes glow {
-    0% {
-        opacity: 0.4;
-        transform: translate(-50%, -50%) scale(0.8);
+    .home-buttons {
+        flex-direction: column;
+        gap: 15px;
     }
-    100% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1.3);
+
+    .btn {
+        padding: 12px 28px;
+        font-size: 1.2rem;
     }
 }

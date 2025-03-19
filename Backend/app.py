@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from flask_mail import Mail, Message
 import mysql.connector
@@ -6,29 +6,39 @@ import bcrypt
 import secrets
 import os
 from dotenv import load_dotenv
+import speech_recognition as sr
+from gtts import gTTS
+import uuid
+# from .env import BASE_URL
+import groq
 
 # Load environment variables
 load_dotenv()
 
+# Environment Variables Check
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+MAIL_USERNAME = os.getenv("MAIL_USERNAME")
+MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+BASE_URL = os.getenv("BASE_URL", "https://your-production-domain.com")
+
+if not GROQ_API_KEY:
+    raise ValueError("🚨 Missing GROQ_API_KEY! Please set it in your .env file.")
+if not MAIL_USERNAME or not MAIL_PASSWORD:
+    raise ValueError("🚨 Missing MAIL credentials! Set MAIL_USERNAME and MAIL_PASSWORD.")
+if not DB_PASSWORD:
+    raise ValueError("🚨 Missing DB_PASSWORD! Set it in your .env file.")
+
+# Flask App Setup
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True, allow_headers=["Content-Type"])
 
-# ✅ SMTP Configuration
-app.config["MAIL_SERVER"] = "smtp.gmail.com"
-app.config["MAIL_PORT"] = 587
-app.config["MAIL_USE_TLS"] = True
-app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
-app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
-app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_USERNAME")
-
-mail = Mail(app)
-
-# ✅ MySQL Connection with Error Handling
+# MySQL Connection
 try:
     db = mysql.connector.connect(
         host="localhost",
         user="root",
-        password=os.getenv("DB_PASSWORD"),
+        password=DB_PASSWORD,
         database="mining_chatbot"
     )
     cursor = db.cursor(dictionary=True)
@@ -36,7 +46,114 @@ except mysql.connector.Error as err:
     print("❌ Database connection error:", err)
     exit(1)
 
-# ✅ Route: Register Company (Fixing Token and Email Sending)
+# SMTP Configuration for Email
+app.config.update({
+    "MAIL_SERVER": "smtp.gmail.com",
+    "MAIL_PORT": 587,
+    "MAIL_USE_TLS": True,
+    "MAIL_USERNAME": MAIL_USERNAME,
+    "MAIL_PASSWORD": MAIL_PASSWORD,
+    "MAIL_DEFAULT_SENDER": MAIL_USERNAME
+})
+mail = Mail(app)
+
+# Directory for audio files
+TEMP_DIR = "temp_audio"
+os.makedirs(TEMP_DIR, exist_ok=True)
+
+# 🎤 Convert Speech to Text
+def speech_to_text(audio_data):
+    recognizer = sr.Recognizer()
+    try:
+        return recognizer.recognize_google(audio_data)
+    except sr.UnknownValueError:
+        return "Could not understand audio"
+    except sr.RequestError:
+        return "Could not request results"
+
+@app.route("/ask", methods=["POST"])
+def ask():
+    data = request.get_json()
+    question = data.get("question", "")
+
+    if not question:
+        return jsonify({"error": "No question provided"}), 400
+
+    try:
+        client = groq.Client(api_key=GROQ_API_KEY)
+        response = client.chat.completions.create(
+            model="llama3-8b-8192",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant for mining laws."},
+                {"role": "user", "content": question}
+            ]
+        )
+        return jsonify({"response": response.choices[0].message.content})
+
+    except Exception as e:
+        return jsonify({"error": f"Chatbot error: {str(e)}"}), 500
+
+
+# 🔊 Convert Text to Speech
+def text_to_speech(text):
+    try:
+        filename = os.path.join(TEMP_DIR, f"response_{uuid.uuid4()}.mp3")
+        tts = gTTS(text=text, lang='en')
+        tts.save(filename)
+        return filename
+    except Exception as e:
+        print(f"Error in text_to_speech: {e}")
+        return None
+
+# 🎤 Voice Input Handling (Now with LLaMA integration)
+@app.route("/voice", methods=["POST"])
+def voice():
+    if "audio" not in request.files:
+        return jsonify({"error": "No audio file provided"}), 400
+
+    audio_file = request.files["audio"]
+    
+    if not audio_file:
+        return jsonify({"error": "Empty audio file"}), 400
+
+    try:
+        # Process audio here (example: save or transcribe)
+        file_path = "temp_audio.wav"
+        audio_file.save(file_path)
+
+        # Example: Speech-to-text (if using OpenAI Whisper, etc.)
+        transcript = "Dummy response for testing"  # Replace with actual processing
+
+        return jsonify({"response": transcript})
+
+    except Exception as e:
+        return jsonify({"error": f"Voice processing failed: {str(e)}"}), 500
+
+
+# 🤖 Chatbot API
+@app.route("/chatbot", methods=["POST"])
+def chatbot():
+    data = request.json
+    question = data.get("question")
+
+    if not question:
+        return jsonify({"error": "Question is required"}), 400
+
+    try:
+        client = groq.Client(api_key=GROQ_API_KEY)
+        response = client.chat.completions.create(
+            model="llama3-8b-8192",
+            messages=[
+                {"role": "system", "content": "You are a helpful chatbot."},
+                {"role": "user", "content": question}
+            ]
+        )
+        return jsonify({"response": response.choices[0].message.content}), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Chatbot error: {str(e)}"}), 500
+
+# 🏢 Register Company
 @app.route("/register", methods=["POST"])
 def register():
     data = request.json
@@ -49,67 +166,47 @@ def register():
     if not all([company_name, email, phone_number, address, password]):
         return jsonify({"error": "All fields are required"}), 400
 
-    # Check if email already exists
     cursor.execute("SELECT id FROM companies WHERE email = %s", (email,))
     if cursor.fetchone():
         return jsonify({"error": "Email already registered"}), 400
 
-    # Hash password
     password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
-    # Generate verification token
-    verification_token = secrets.token_hex(16)
-    print(f"✅ Generated Token for {email}: {verification_token}")  # Debugging
-
     try:
-        # Insert into database
         cursor.execute("""
-            INSERT INTO companies (company_name, email, phone_number, address, password_hash, verification_token, verified)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (company_name, email, phone_number, address, password_hash, verification_token, False))
+            INSERT INTO companies (company_name, email, phone_number, address, password_hash, verified)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (company_name, email, phone_number, address, password_hash, True))
         db.commit()
 
-        # ✅ Generate verification link dynamically
-        verification_link = f"{request.host_url}verify/{verification_token}"
-        print(f"📩 Sending verification email: {verification_link}")  # Debugging
+        # ✅ Send a welcome email
+        msg = Message(
+            subject="Welcome to Mining Industry Chatbot",
+            recipients=[email],
+            html=f"""
+                <p>Hi <b>{company_name}</b>,</p>
+                <p>Welcome to the Mining Industry Chatbot! You can now start using the chatbot to get answers about mining laws and regulations.</p>
+                <p>We’re here to help you 24/7!</p>
+                <p>Best Regards,<br>Mining Chatbot Team</p>
+            """
+        )
+        mail.send(msg)
 
-        # ✅ Send Verification Email with HTML Formatting
-        try:
-            msg = Message(
-                subject="Verify Your Account",
-                recipients=[email],
-                html=f"""
-                    <h3>Welcome to Mining Chatbot</h3>
-                    <p>Click the link below to verify your account:</p>
-                    <p><a href="{verification_link}" style="color:blue; font-size:16px; font-weight:bold;">Verify Email</a></p>
-                    <br>
-                    <p>If you can't click the link, copy and paste this URL into your browser:</p>
-                    <p style="font-weight:bold;">{verification_link}</p>
-                """,
-                body=f"Click the link to verify your account: {verification_link}"
-            )
-            mail.send(msg)
-            print("✅ Verification email sent successfully!")
+        print(f"✅ Welcome email sent to: {email}")
 
-        except Exception as e:
-            print(f"❌ Error sending email: {e}")
-            return jsonify({"error": "Failed to send verification email"}), 500
-
-        return jsonify({"message": "Registration successful! Check your email for verification."}), 201
+        return jsonify({"message": "Registration successful! Check your email for a welcome message."}), 201
 
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 400
 
-# ✅ Route: Verify Email (Fixing Token Issue)
+# ✅ Verify Email
 @app.route("/verify/<token>", methods=["GET"])
 def verify_email(token):
     try:
-        # Check if the token exists
         cursor.execute("SELECT id FROM companies WHERE verification_token = %s", (token,))
         result = cursor.fetchone()
 
         if result:
-            # ✅ Fix: Only set token to NULL after successful verification
             cursor.execute("UPDATE companies SET verified = TRUE, verification_token = NULL WHERE id = %s", (result["id"],))
             db.commit()
             return jsonify({"message": "Email verified successfully!"}), 200
@@ -119,100 +216,56 @@ def verify_email(token):
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
 
-# ✅ Route: Login (Fixed Condition)
+# 🔐 Login
 @app.route("/login", methods=["POST"])
 def login():
     data = request.json
+    email = data.get("email")
+    password = data.get("password")
 
-    # Ensure email and password are provided
-    if not data or "email" not in data or "password" not in data:
+    if not email or not password:
         return jsonify({"error": "Email and password are required!"}), 400
 
-    email = data["email"]
-    password = data["password"]
-
     try:
-        cursor = db.cursor()
-
-        # Fetch user by email
-        cursor.execute("SELECT password_hash FROM companies WHERE email = %s AND verified = TRUE", (email,))
+        # ✅ Fetch company name and password hash from the database
+        cursor.execute("SELECT company_name, password_hash FROM companies WHERE email = %s AND verified = TRUE", (email,))
         company = cursor.fetchone()
-        cursor.close()
 
-        # If no company found or not verified
-        if not company:
-            return jsonify({"error": "Account not found or not verified!"}), 404
-
-        stored_hashed_password = company[0]  # Use index 0 because only 'password_hash' is selected
-
-        # Compare entered password with stored hashed password
-        if bcrypt.checkpw(password.encode(), stored_hashed_password.encode()):
-            return jsonify({"success": True, "message": "Login successful"}), 200
-        else:
+        if not company or not bcrypt.checkpw(password.encode(), company["password_hash"].encode()):
             return jsonify({"error": "Invalid email or password!"}), 401
+
+        # ✅ Return company_name on successful login
+        return jsonify({
+            "success": True,
+            "company_name": company["company_name"],
+            "message": "Login successful"
+        }), 200
 
     except Exception as e:
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
-# ✅ Chatbot Session Management
-@app.route("/chatbot/start", methods=["POST"])
-def start_chat():
-    """Start chatbot session by asking for the mine of interest."""
-    session.clear()  # Clear previous session
-    session["stage"] = "mine_selection"
-    return jsonify({"message": "Welcome! Which mine are you interested in?"}), 200
+    
+@app.route("/get-user", methods=["GET"])
+def get_user():
+    email = request.args.get("email")
 
-@app.route("/chatbot/respond", methods=["POST"])
-def chatbot_respond():
-    """Handles user responses and moves through the chatbot flow."""
-    data = request.json
-    user_input = data.get("message")
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
 
-    if "stage" not in session:
-        return jsonify({"error": "Session expired. Please restart the chatbot."}), 400
+    try:
+        cursor.execute("SELECT company_name FROM companies WHERE email = %s", (email,))
+        user = cursor.fetchone()
 
-    stage = session["stage"]
-
-    if stage == "mine_selection":
-        session["selected_mine"] = user_input
-        session["stage"] = "raw_material_selection"
-        return jsonify({"message": f"Got it! You are interested in {user_input}. Now, which raw material or item are you looking for?"})
-
-    elif stage == "raw_material_selection":
-        session["selected_material"] = user_input
-        session["stage"] = "query_type_selection"
-        return jsonify({"message": "Would you like information on Acts & Rules, Circulars, or FAQs?"})
-
-    elif stage == "query_type_selection":
-        session["query_type"] = user_input.lower()
-        if session["query_type"] not in ["acts_rules", "circulars", "faqs"]:
-            return jsonify({"error": "Invalid selection. Choose from Acts & Rules, Circulars, or FAQs."}), 400
-        session["stage"] = "question_asking"
-        return jsonify({"message": "You can now ask your question."})
-
-    elif stage == "question_asking":
-        query_type = session["query_type"]
-        
-        # Fetch answer from the database
-        cursor.execute(f"SELECT answer FROM {query_type} WHERE question = %s", (user_input,))
-        result = cursor.fetchone()
-
-        if result:
-            return jsonify({"message": result["answer"]})
+        if user:
+            print("✅ User fetched:", user)  # Debug log
+            return jsonify({"user_name": user["company_name"]}), 200
         else:
-            return jsonify({"message": "Sorry, I don't have an answer for that. Please try another question."})
+            return jsonify({"error": "User not found"}), 404
 
-    return jsonify({"error": "Invalid stage. Please restart the chatbot."}), 400
+    except mysql.connector.Error as err:
+        return jsonify({"error": f"Database error: {str(err)}"}), 500
 
-# ✅ Prevent Navigation to Previous Page (Browser Back Button)
-@app.after_request
-def prevent_back(response):
-    """Prevent users from going back to the previous chatbot stage using browser navigation."""
-    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
-    return response
 
+# Run the Flask App
 if __name__ == "__main__":
-    app.run(debug=True)
-
+    app.run(debug=False)  # 🔒 Set `debug=False` in production

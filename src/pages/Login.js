@@ -1,29 +1,47 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import "../styles/Login.css"; // Import CSS file
-import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import icons for password visibility
+import "../styles/Login.css";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
-function Login() {
+function Login({ setCompanyName }) { // ✅ Accept setCompanyName as a prop
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false); // State for password visibility
+    const [showPassword, setShowPassword] = useState(false);
     const [message, setMessage] = useState("");
     const navigate = useNavigate();
 
     const handleLogin = async () => {
         try {
+            console.log("Logging in with email:", email);
+    
             const res = await axios.post("http://localhost:5000/login", { email, password });
             if (res.data.success) {
-                navigate("/chatbot");
+                console.log("Login successful, fetching user details for email:", email);
+    
+                // ✅ Pass email and userName to Chatbot.js
+                const userRes = await axios.get(`http://localhost:5000/get-user?email=${email}`);
+                console.log("Fetched user details:", userRes.data);
+    
+                if (userRes.data && userRes.data.user_name) {
+                    navigate("/chatbot", {
+                        state: {
+                            userName: userRes.data.user_name,
+                            email: email // ✅ Pass email as well
+                        }
+                    });
+                } else {
+                    console.error("User name not found in response");
+                }
             } else {
                 setMessage(res.data.error);
             }
         } catch (error) {
+            console.error("Login error:", error);
             setMessage("Login failed. Please try again.");
         }
     };
-
+    
     return (
         <div className="auth-background">
             <div className="auth-container">
