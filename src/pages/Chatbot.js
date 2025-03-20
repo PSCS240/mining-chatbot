@@ -60,7 +60,7 @@ function Chatbot() {
 
     // Initial Bot Greeting
     useEffect(() => {
-        setMessages([{ type: "bot", content: "Hello! How can I assist you with Mining Laws?" }]);
+        setMessages([{ type: "bot", text: "Hello! How can I assist you with Mining Laws?", timestamp: new Date() }]);
     }, []);
 
     // Auto-scroll to latest message
@@ -105,33 +105,88 @@ function Chatbot() {
         return stats.lastActive.toLocaleDateString();
     };
 
-    // Handle Sending Query
-    const handleSubmit = async (input = null) => {
-        const finalQuery = input || query;
+    const formatBotResponse = (text) => {
+        if (!text) return text;
+    
+        // Split the text into sections using '**' for bold
+        const sections = text.split(/\*\*(.*?)\*\*/).filter(Boolean);
+    
+        return sections.map((section, index) => {
+            if (index % 2 === 0) {
+                // Format normal text (no bold)
+                return (
+                    <div key={index}>
+                        {section.split('\n').map((line, i) => {
+                            if (line.match(/^\d+\./)) {
+                                // Numbered list
+                                return <p key={i} style={{ marginLeft: "20px" }}>{line}</p>;
+                            } else if (line.match(/^-/)) {
+                                // Bullet point list
+                                return <p key={i} style={{ marginLeft: "20px" }}>• {line.substring(1).trim()}</p>;
+                            } else {
+                                // Normal text
+                                return <p key={i}>{line}</p>;
+                            }
+                        })}
+                    </div>
+                );
+            } else {
+                // Format bold text
+                return (
+                    <strong key={index}>
+                        {section}
+                    </strong>
+                );
+            }
+        });
+    };
+
+    const extractTextFromJSX = (jsx) => {
+        if (typeof jsx === 'string') return jsx;
+        if (Array.isArray(jsx)) return jsx.map(extractTextFromJSX).join(' ');
+        if (jsx && typeof jsx === 'object' && jsx.props) {
+            return extractTextFromJSX(jsx.props.children);
+        }
+        return '';
+    };
+    
+    const handleSubmit = async (e, customQuery = null) => {
+        if (e) e.preventDefault();
+    
+        const finalQuery = customQuery || query;
         if (!finalQuery.trim()) return;
     
-        setMessages((prev) => [...prev, { type: "user", content: finalQuery }]);
+        setMessages(prev => [...prev, { type: "user", text: finalQuery, timestamp: new Date() }]);
         setQuery("");
         setLoading(true);
     
         try {
             const res = await axios.post("http://localhost:5000/ask", { question: finalQuery });
-    
             if (!res.data || !res.data.response) throw new Error("No response from API");
     
-            // Split the response by newlines and display each line separately
-            const formattedResponse = res.data.response.split("\n").map(line => line.trim()).filter(line => line !== "");
+            const formattedResponse = formatBotResponse(res.data.response);
+            
+            setMessages(prev => [...prev, { 
+                type: "bot", 
+                text: formattedResponse, 
+                timestamp: new Date() 
+            }]);
     
-            formattedResponse.forEach((line) => {
-                setMessages((prev) => [...prev, { type: "bot", content: line }]);
-            });
+            setHistory(prev => [...prev, { 
+                query: finalQuery, 
+                timestamp: new Date() 
+            }]);
     
-            setHistory((prev) => [...prev, finalQuery]);
+            // ✅ Extract plain text from JSX for speech synthesis
+            if (!isMuted) speakResponse(extractTextFromJSX(formattedResponse));
     
-            if (!isMuted) speakResponse(res.data.response);
         } catch (error) {
             console.error("Error fetching response:", error);
-            setMessages((prev) => [...prev, { type: "bot", content: "Error: Unable to fetch response." }]);
+            setMessages(prev => [...prev, { 
+                type: "bot", 
+                text: "Sorry, I encountered an error. Please try again.", 
+                timestamp: new Date() 
+            }]);
         } finally {
             setLoading(false);
         }
@@ -140,59 +195,97 @@ function Chatbot() {
 
     // Start New Chat
     const startNewChat = () => {
-        setMessages([{ type: "bot", content: "Hello! How can I assist you with Mining Laws?" }]);
+        setMessages([{ type: "bot", text: "Hello! How can I assist you with Mining Laws?", timestamp: new Date() }]);
         setHistory([]);
     };
 
-    // Start Voice Recognition
-    const startVoiceRecognition = () => {
-        if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
-            setMessages((prev) => [...prev, { type: "bot", content: "Speech recognition not supported." }]);
-            return;
-        }
+// Start Voice Recognition
+const startVoiceRecognition = () => {
+    const SpeechRecognition = 
+        window.SpeechRecognition || 
+        window.webkitSpeechRecognition || 
+        null;
 
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognitionRef.current = recognition;
-        recognition.lang = "en-US";
-        recognition.continuous = false;
-        recognition.interimResults = false;
+    if (!SpeechRecognition) {
+        setMessages(prev => [...prev, { 
+            type: "bot", 
+            text: "Speech recognition is not supported in your browser.", 
+            timestamp: new Date() 
+        }]);
+        return;
+    }
 
-        setIsRecording(true);
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
 
-        recognition.onresult = (event) => {
-            const userSpeech = event.results[0][0].transcript.trim();
-            if (userSpeech) handleSubmit(userSpeech);
-        };
+    setIsRecording(true);
 
-        recognition.onerror = (event) => {
-            console.error("Voice recognition error:", event.error);
-            setIsRecording(false);
-        };
-
-        recognition.onend = () => setIsRecording(false);
-
-        recognition.start();
-    };
-
-    // Stop Voice Recognition
-    const stopVoiceRecognition = () => {
-        if (recognitionRef.current) {
-            recognitionRef.current.stop();
-            setIsRecording(false);
+    recognition.onresult = (event) => {
+        const userSpeech = event.results[0][0].transcript.trim();
+        if (userSpeech) {
+            setQuery(userSpeech);
+            handleSubmit({ preventDefault: () => {} }); // ✅ Trigger submission
         }
     };
+
+    recognition.onerror = (event) => {
+        console.error("Voice recognition error:", event.error);
+
+        if (event.error === 'not-allowed') {
+            setMessages(prev => [...prev, { 
+                type: "bot", 
+                text: "Microphone access denied. Please enable microphone permissions.", 
+                timestamp: new Date() 
+            }]);
+        } else if (event.error === 'no-speech') {
+            setMessages(prev => [...prev, { 
+                type: "bot", 
+                text: "No speech detected. Try speaking more clearly.", 
+                timestamp: new Date() 
+            }]);
+        } else {
+            setMessages(prev => [...prev, { 
+                type: "bot", 
+                text: `Voice recognition error: ${event.error}`, 
+                timestamp: new Date() 
+            }]);
+        }
+
+        setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+        setIsRecording(false);
+    };
+
+    recognition.start();
+};
+
+// Stop Voice Recognition
+const stopVoiceRecognition = () => {
+    if (recognitionRef.current) {
+        recognitionRef.current.stop();
+        setIsRecording(false);
+    }
+};
+
 
     // Text-to-Speech
     const speakResponse = (text) => {
         const speech = new SpeechSynthesisUtterance(text);
         window.speechSynthesis.speak(speech);
     };
-
-    // Toggle Mute
     const toggleMute = () => {
+        console.log("Mute button clicked"); // ✅ Test logging
+        if (!isMuted) {
+            window.speechSynthesis.cancel(); 
+        }
         setIsMuted(!isMuted);
-        if (!isMuted) window.speechSynthesis.cancel();
     };
+    
 
     // Clear Chat
     const clearChat = () => {
@@ -214,133 +307,124 @@ function Chatbot() {
     }, []);
 
     return (
-        <div className="chatbot-wrapper">
-            {/* Left Side - History */}
-            <div className="history-panel">
-                <h2>Chat History</h2>
-                <div class="history-buttons">
-                    <button class="new-chat-button">New Conversation</button>
-                    <button class="delete-chat-button">Delete Chat</button>
+        <div className={`chatbot-container ${theme}-theme`}>
+            {/* Left Sidebar */}
+            <div className="sidebar sidebar-left">
+                <div className="sidebar-buttons">
+                    <button className="new-chat-button" onClick={startNewChat}>
+                        <FaPlus /> New Chat
+                    </button>
+                    <button className="delete-chat-button" onClick={clearChat}>
+                        <FaTrash /> Clear Chat
+                    </button>
                 </div>
-
-                {history.length === 0 ? (
-                    <p>No conversation history</p>
-                ) : (
-                    <ul>
-                        {history.map((item, index) => (
-                            <li key={index}>{item}</li>
-                        ))}
-                    </ul>
-                )}
+                <div className="chat-history">
+                    {history.map((item, index) => (
+                        <div key={index} className="chat-history-item">
+                            <div className="chat-history-content">
+                                <FaHistory className="history-icon" />
+                                <span>{item.query}</span>
+                                <small>{new Date(item.timestamp).toLocaleTimeString()}</small>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
-            {/* Center - Chatbot */}
-            <div className="chatbot-container">
-                <div className="chatbot-header">
-                    <h1>Mining Industry Chatbot</h1>
-                    <div className="header-controls">
-                        {/* <select 
-                            className="theme-selector" 
-                            value={theme} 
-                            onChange={(e) => toggleTheme(e.target.value)}
-                        >
-                            <option value="dark">Dark Theme</option>
-                            <option value="light">Light Theme</option>
-                        </select> */}
-                        <button className="mute-button" onClick={toggleMute}>
-                            {isMuted ? <FaVolumeMute /> : <FaVolumeUp />}
-                        </button>
-                    </div>
+            {/* Main Chat Area */}
+            <div className="main-content">
+                <div className="chat-header">
+                    <h2>Mining Law Assistant</h2>
+                    <select 
+                        value={theme} 
+                        onChange={(e) => toggleTheme(e.target.value)}
+                        className="theme-selector"
+                    >
+                        <option value="dark">Dark Theme</option>
+                        <option value="light">Light Theme</option>
+                    </select>
                 </div>
 
                 <div className="chat-area" ref={chatAreaRef}>
                     {messages.map((message, index) => (
-                        <div key={index} className={`message ${message.type}-message`}>
-                            {message.content}
+                        <div key={index} className={`message ${message.type}`}>
+                            <div className="message-icon">
+                                {message.type === 'user' ? <FaUser /> : <FaRobot />}
+                            </div>
+                            <div className="message-content">
+                                <p>{message.text}</p>
+                                <small>{new Date(message.timestamp).toLocaleTimeString()}</small>
+                            </div>
                         </div>
                     ))}
-                    {isRecording && (
-                        <div className="message bot-message">
-                            Recording... <button onClick={stopVoiceRecognition}><FaStop /></button>
-                        </div>
-                    )}
+                    {loading && <div className="loading">Processing...</div>}
                 </div>
 
                 <div className="input-area">
-                    <div className="input-container">
-                        <input
-                            type="text"
-                            className="chat-input"
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Ask about mining laws..."
-                            onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
-                        />
-                        <div className="button-group">
-                            <button className="voice-button" onClick={isRecording ? stopVoiceRecognition : startVoiceRecognition}>
-                                {isRecording ? <FaStop /> : <FaMicrophone />}
-                            </button>
-                            <button className="send-button" onClick={() => handleSubmit()}>
-                                <FaPaperPlane />
-                            </button>
-                        </div>
+                    <textarea
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Ask a question about mining laws..."
+                        onKeyPress={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSubmit(e);
+                            }
+                        }}
+                    />
+                    <div className="button-group">
+                        <button 
+                            className={`mic-button ${isRecording ? 'recording' : ''}`}
+                            onClick={isRecording ? stopVoiceRecognition : startVoiceRecognition}
+                        >
+                            {isRecording ? <FaStop /> : <FaMicrophone />}
+                        </button>
+                        <button 
+                            className="mute-button"
+                            onClick={toggleMute}>
+                            {isMuted ? <FaVolumeMute /> : <FaVolumeUp />}
+                        </button>
+
+
+                        <button 
+                            className="send-button" 
+                            onClick={(e) => handleSubmit(e)}
+                            disabled={!query.trim() && !isRecording}
+                        >
+                            <FaPaperPlane />
+                        </button>
                     </div>
                 </div>
             </div>
 
-            {/* Right Side - Profile */}
-            <div className="profile-section">
-                <div className="profile-header">
-                    <div className="profile-avatar">
-                        <FaRobot />
-                    </div>
-                    <h3>Welcome, {userName}!</h3>
-                    <div className="user-role">
-                        Mining Law Assistant
-                    </div>
+            {/* Right Sidebar - Profile Info */}
+            <div className="sidebar sidebar-right">
+                <div className="profile-section">
+                    <FaUserCircle className="profile-icon" />
+                    <h3>{userName}</h3>
+                    <p>{email}</p>
                 </div>
-                <div className="profile-content">
-                    <div className="profile-stats">
-                        <div className="questions-asked">
-                            <div className="stat-icon">
-                                <FaQuestion />
-                            </div>
-                            <div className="stat-info">
-                                <h4>Questions Asked</h4>
-                                <p>{stats.questionsAsked}</p>
-                            </div>
-                        </div>
-                        <div className="time-spent">
-                            <div className="stat-icon">
-                                <FaClock />
-                            </div>
-                            <div className="stat-info">
-                                <h4>Time Spent</h4>
-                                <p>{getTimeSpent()}</p>
-                            </div>
-                        </div>
+                <div className="stats-section">
+                    <div className="stat-item">
+                        <FaQuestion />
+                        <span>Questions Asked: {stats.questionsAsked}</span>
                     </div>
-                    <div className="session-info">
-                        <div className="info-item">
-                            <div className="info-icon">
-                                <FaClock />
-                            </div>
-                            <div className="info-text">
-                                <h4>Last Activity</h4>
-                                <p>{getLastActiveTime()}</p>
-                            </div>
-                        </div>
+                    <div className="stat-item">
+                    <FaClock />
+                        <span>Time Spent: {getTimeSpent()}</span>
+                    </div>
+                    <div className="stat-item">
+                        <FaClock />
+                        <span>Last Active: {getLastActiveTime()}</span>
                     </div>
                 </div>
                 <div className="expertise-section">
-                    <h4>Areas of Expertise</h4>
-                    <div className="expertise-tags">
-                        {stats.expertise.map((item, index) => (
-                            <span key={index} className="expertise-tag">
-                                {item}
-                            </span>
+                    <h4>AI Assistant Expertise</h4>
+                    <ul>
+                        {stats.expertise.map((exp, index) => (
+                            <li key={index}>{exp}</li>
                         ))}
-                    </div>
+                    </ul>
                 </div>
             </div>
         </div>

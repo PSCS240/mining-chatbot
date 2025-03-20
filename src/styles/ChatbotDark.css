@@ -1,0 +1,152 @@
+/* Dark theme styles */
+.dark-theme {
+  background-color: #111827;
+  color: #f3f4f6;
+}
+
+.dark-theme .sidebar {
+  background-color: #1f2937;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.dark-theme .new-chat-button {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.dark-theme .new-chat-button:hover {
+  background-color: #2563eb;
+}
+
+.dark-theme .main-chat {
+  background-color: #1f2937;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-theme .chat-header {
+  background-color: rgba(31, 41, 55, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.dark-theme .chat-area {
+  background-color: #1f2937;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.dark-theme .message {
+  background-color: #374151;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f3f4f6;
+}
+
+.dark-theme .user-message {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+}
+
+.dark-theme .bot-message {
+  background-color: #374151;
+  color: #f3f4f6;
+}
+
+.dark-theme .input-area {
+  background-color: #1f2937;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.dark-theme .input-field {
+  background-color: #374151;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f3f4f6;
+}
+
+.dark-theme .input-field::placeholder {
+  color: #9ca3af;
+}
+
+.dark-theme .action-button {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.dark-theme .action-button:hover {
+  background-color: #2563eb;
+}
+
+.dark-theme .profile-card {
+  background-color: #1f2937;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.dark-theme .profile-avatar {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.dark-theme .stat-icon {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.dark-theme .history-item {
+  background-color: #374151;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f3f4f6;
+}
+
+.dark-theme .history-item:hover {
+  background-color: #4b5563;
+  border-color: #3b82f6;
+}
+
+.dark-theme .stats-panel {
+  background-color: #374151;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.dark-theme .stat-item {
+  background-color: #374151;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-theme ::-webkit-scrollbar-thumb {
+  background-color: #4b5563;
+}
+
+.dark-theme ::-webkit-scrollbar-thumb:hover {
+  background-color: #718096;
+}
+
+.dark-theme .theme-toggle {
+  background-color: #4b5563;
+  color: #f3f4f6;
+}
+
+.dark-theme .loading-indicator {
+  color: #3b82f6;
+}
+
+.dark-theme .theme-select {
+  background-color: #374151;
+  color: #f3f4f6;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-theme .theme-select:hover {
+  border-color: #3b82f6;
+  background-color: #4b5563;
+}
+
+.dark-theme .delete-chat-button {
+  background-color: #ef4444;
+  color: white;
+}
+
+.dark-theme .delete-chat-button:hover {
+  background-color: #dc2626;
+}
