@@ -194,10 +194,11 @@ def register():
 
         print(f"✅ Welcome email sent to: {email}")
 
-        return jsonify({"message": "Registration successful! Check your email for a welcome message."}), 201
+        return jsonify({"success": True, "message": "Registration successful! Redirecting to login page."}), 201
 
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 400
+
 
 # ✅ Verify Email
 @app.route("/verify/<token>", methods=["GET"])
@@ -215,6 +216,7 @@ def verify_email(token):
 
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
+    
 
 # 🔐 Login
 @app.route("/login", methods=["POST"])

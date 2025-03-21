@@ -25,13 +25,13 @@ const Register = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     setMessage(""); // Clear previous messages
-
+  
     if (password !== confirmPassword) {
       setMessage("Passwords do not match");
       setMessageType("error");
       return;
     }
-
+  
     try {
       const response = await axios.post("http://localhost:5000/register", {
         company_name: companyName,
@@ -40,22 +40,28 @@ const Register = () => {
         address,
         password,
       });
-
+  
       setMessage(response.data.message);
       setMessageType("success");
-
-      // Clear form fields after successful registration
+  
+      // ✅ Clear form fields after successful registration
       setCompanyName("");
       setEmail("");
       setPhoneNumber("");
       setAddress("");
       setPassword("");
       setConfirmPassword("");
+  
+      // ✅ Redirect to login page
+      setTimeout(() => {
+        window.location.href = "/login"; // Redirect after 2 seconds
+      }, 2000);
     } catch (error) {
       setMessage(error.response?.data?.error || "Registration failed");
       setMessageType("error");
     }
   };
+  
 
   return (
     <div className="registration-container">

@@ -428,3 +428,26 @@ textarea {
     line-height: 1.5;
     display: block;
 }
+@keyframes glowBot {
+    0% {
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+    }
+    100% {
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+    }
+}
+
+@keyframes glowUser {
+    0% {
+        box-shadow: 0 0 10px rgba(255, 82, 82, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(255, 82, 82, 0.6);
+    }
+    100% {
+        box-shadow: 0 0 10px rgba(255, 82, 82, 0.4);
+    }
+}

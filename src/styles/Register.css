@@ -39,6 +39,7 @@ body {
     box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
     animation: float 3s infinite ease-in-out;
     transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    margin: auto;
 }
 
 .registration-form:hover {
@@ -75,6 +76,7 @@ body {
 .form-group input,
 .form-group textarea {
     width: 100%;
+    margin: auto;
     padding: 12px;
     background: rgba(255, 255, 255, 0.15);
     border: 2px solid transparent;
@@ -183,6 +185,7 @@ body {
 .message.success {
     color: green;
     background-color: rgba(0, 255, 0, 0.1);
+    margin: auto;
 }
 
 .message.error {
