@@ -11,6 +11,8 @@ from gtts import gTTS
 import uuid
 # from .env import BASE_URL
 import groq
+from pymongo import MongoClient
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
@@ -46,6 +48,15 @@ except mysql.connector.Error as err:
     print("❌ Database connection error:", err)
     exit(1)
 
+# MongoDB Connection
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+mongo_client = MongoClient(MONGO_URI)
+mongo_db = mongo_client["MiningChatbot"]  # Database name
+history_collection = mongo_db["history"]  # Collection name
+
+print(f"✅ Connected to MongoDB Database: {mongo_db.name}")  # Debug log
+print(f"✅ Using Collection: {history_collection.name}")  # Debug log
+
 # SMTP Configuration for Email
 app.config.update({
     "MAIL_SERVER": "smtp.gmail.com",
@@ -74,10 +85,14 @@ def speech_to_text(audio_data):
 @app.route("/ask", methods=["POST"])
 def ask():
     data = request.get_json()
-    question = data.get("question", "")
+    print(f"🔍 Incoming Request Data: {data}")  # Debug log
 
-    if not question:
-        return jsonify({"error": "No question provided"}), 400
+    question = data.get("question", "")
+    email = data.get("email", "")  # Ensure email is passed in the request
+
+    if not question or not email:
+        print("❌ Missing 'question' or 'email' in request")  # Debug log
+        return jsonify({"error": "Question and email are required"}), 400
 
     try:
         client = groq.Client(api_key=GROQ_API_KEY)
@@ -88,9 +103,23 @@ def ask():
                 {"role": "user", "content": question}
             ]
         )
-        return jsonify({"response": response.choices[0].message.content})
+        answer = response.choices[0].message.content
+
+        # Save question and response to MongoDB
+        history_entry = {
+            "email": email,
+            "question": question,
+            "response": answer,
+            "timestamp": datetime.utcnow()
+        }
+        result = history_collection.insert_one(history_entry)
+        print(f"✅ MongoDB Inserted ID: {result.inserted_id}")  # Debug log
+        print(f"✅ Inserted Document: {history_entry}")  # Debug log
+
+        return jsonify({"response": answer})
 
     except Exception as e:
+        print(f"❌ Error in /ask endpoint: {e}")  # Debug log
         return jsonify({"error": f"Chatbot error: {str(e)}"}), 500
 
 
@@ -135,9 +164,10 @@ def voice():
 def chatbot():
     data = request.json
     question = data.get("question")
+    email = data.get("email")  # Ensure email is passed in the request
 
-    if not question:
-        return jsonify({"error": "Question is required"}), 400
+    if not question or not email:
+        return jsonify({"error": "Question and email are required"}), 400
 
     try:
         client = groq.Client(api_key=GROQ_API_KEY)
@@ -148,10 +178,40 @@ def chatbot():
                 {"role": "user", "content": question}
             ]
         )
-        return jsonify({"response": response.choices[0].message.content}), 200
+        answer = response.choices[0].message.content
+
+        # Save question and response to MongoDB
+        history_entry = {
+            "email": email,
+            "question": question,
+            "response": answer,
+            "timestamp": datetime.utcnow()
+        }
+        result = history_collection.insert_one(history_entry)
+        print(f"✅ MongoDB Inserted ID: {result.inserted_id}")  # Debug log
+        print(f"✅ Inserted Document: {history_entry}")  # Debug log
+
+        return jsonify({"response": answer}), 200
 
     except Exception as e:
+        print(f"❌ Error in /chatbot endpoint: {e}")  # Debug log
         return jsonify({"error": f"Chatbot error: {str(e)}"}), 500
+
+# New Endpoint: Fetch User History
+@app.route("/history", methods=["GET"])
+def history():
+    email = request.args.get("email")
+
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    try:
+        # Fetch history from MongoDB
+        history = list(history_collection.find({"email": email}, {"_id": 0, "email": 0}).sort("timestamp", -1))
+        return jsonify({"history": history}), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch history: {str(e)}"}), 500
 
 # 🏢 Register Company
 @app.route("/register", methods=["POST"])
