@@ -1,0 +1,412 @@
+.otp-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #0a0a0a;
+    position: relative;
+    overflow: hidden;
+}
+
+.otp-container::before {
+    content: '';
+    position: absolute;
+    width: 300%;
+    height: 300%;
+    background: radial-gradient(circle, rgba(64, 0, 128, 0.15) 20%, transparent 20.01%);
+    background-size: 80px 80px;
+    animation: rotateBackground 15s linear infinite;
+    pointer-events: none;
+    opacity: 0.4;
+}
+
+.otp-box {
+    position: relative;
+    z-index: 10;
+    background: rgba(10, 0, 15, 0.8);
+    backdrop-filter: blur(15px);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(128, 0, 128, 0.2);
+    width: 100%;
+    max-width: 400px;
+    border: 1px solid rgba(128, 0, 128, 0.2);
+    animation: containerGlow 4s infinite alternate;
+}
+
+.otp-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+.otp-box h2 {
+    color: #ffffff;
+    font-size: 2rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.otp-box p {
+    color: #b892ff;
+}
+
+.otp-box input {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 15px;
+    border: 1px solid rgba(128, 0, 128, 0.2);
+    border-radius: 8px;
+    font-size: 1rem;
+    background: rgba(64, 0, 128, 0.1);
+    color: #b892ff;
+    outline: none;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+.otp-box input:focus {
+    background: rgba(64, 0, 128, 0.2);
+    box-shadow: 0 0 15px rgba(128, 0, 128, 0.3);
+    transform: scale(1.02);
+}
+
+.otp-box button {
+    width: 100%;
+    padding: 14px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(45deg, #330033, #660066);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 0 15px rgba(128, 0, 128, 0.3);
+}
+
+.otp-box button:hover {
+    transform: scale(1.05);
+    background: linear-gradient(45deg, #ff0055, #8000ff);
+    box-shadow: 0 0 25px rgba(128, 0, 128, 0.5);
+}
+
+.error-message {
+    background: rgba(220, 53, 69, 0.1);
+    color: #ff0055;
+    border-left: 4px solid #ff0055;
+    text-align: center;
+    margin-bottom: 1rem;
+    animation: shake 0.5s ease-in-out;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.success-message {
+    background: rgba(40, 167, 69, 0.1);
+    color: #2ecc71;
+    border-left: 4px solid #2ecc71;
+    text-align: center;
+    margin-bottom: 1rem;
+    animation: slideIn 0.5s ease-out;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.success-checkmark {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 15px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(46, 204, 113, 0.1);
+    animation: checkmarkPop 0.5s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.success-checkmark::after {
+    content: '✓';
+    font-size: 2rem;
+    color: #2ecc71;
+}
+
+.timer {
+    font-size: 1.1em;
+    color: #b892ff;
+    margin: 15px 0;
+    text-align: center;
+    position: relative;
+    padding: 15px;
+    background: rgba(64, 0, 128, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(128, 0, 128, 0.2);
+}
+
+.timer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 4px;
+    width: 100%;
+    background: linear-gradient(45deg, #ff0055, #8000ff);
+    animation: timeProgress 60s linear forwards;
+}
+
+@keyframes timeProgress {
+    from {
+        width: 100%;
+        background: linear-gradient(45deg, #ff0055, #8000ff);
+    }
+    to {
+        width: 0%;
+        background: linear-gradient(to right, #e74c3c, #c0392b);
+    }
+}
+
+.resend-button {
+    margin-top: 10px;
+    background: linear-gradient(45deg, #330033, #660066);
+    width: 100%;
+    opacity: 1;
+    transition: opacity 0.3s ease, transform 0.2s ease;
+}
+
+.resend-button:hover {
+    background: linear-gradient(45deg, #ff0055, #8000ff);
+    transform: translateY(-2px);
+}
+
+.page-transition {
+    animation: fadeOut 0.5s ease-out forwards;
+}
+
+.success-verification {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 0, 15, 0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    animation: fadeInOverlay 0.5s ease-out;
+    z-index: 20;
+}
+
+.success-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #2ecc71, #27ae60);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    animation: successPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.success-icon::after {
+    content: '✓';
+    font-size: 40px;
+    color: white;
+    animation: checkmarkDraw 0.4s ease-out 0.2s both;
+}
+
+.success-text {
+    color: #2ecc71;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    animation: slideUpFade 0.5s ease-out 0.3s both;
+}
+
+.redirect-text {
+    color: #b892ff;
+    animation: slideUpFade 0.5s ease-out 0.4s both;
+}
+
+.verification-success {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 0, 15, 0.95);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    animation: fadeInOverlay 0.5s ease-out;
+    z-index: 20;
+}
+
+.success-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #2ecc71, #27ae60);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    box-shadow: 0 0 30px rgba(46, 204, 113, 0.3);
+    animation: successPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.success-icon::after {
+    content: '✓';
+    font-size: 40px;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    animation: checkmarkDraw 0.4s ease-out 0.2s both;
+}
+
+.success-text {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #2ecc71;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    animation: slideUpFade 0.5s ease-out 0.3s both;
+}
+
+.redirect-text {
+    color: #b892ff;
+    animation: slideUpFade 0.5s ease-out 0.4s both;
+}
+
+.page-exit {
+    animation: pageExit 0.8s ease-in-out forwards;
+}
+
+@keyframes fadeInOverlay {
+    from {
+        opacity: 0;
+        backdrop-filter: blur(0);
+    }
+    to {
+        opacity: 1;
+        backdrop-filter: blur(8px);
+    }
+}
+
+@keyframes successPop {
+    0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+    70% {
+        transform: scale(1.2) rotate(20deg);
+    }
+    100% {
+        transform: scale(1) rotate(0);
+        opacity: 1;
+    }
+}
+
+@keyframes checkmarkDraw {
+    from {
+        opacity: 0;
+        transform: scale(0.5) rotate(-45deg);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) rotate(0);
+    }
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pageExit {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.2);
+        opacity: 0;
+    }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes checkmarkPop {
+    0% {
+        transform: scale(0);
+    }
+    70% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+}
+
+@keyframes containerGlow {
+    0% {
+        box-shadow: 0 0 20px rgba(128, 0, 128, 0.2);
+    }
+    100% {
+        box-shadow: 0 0 40px rgba(255, 0, 85, 0.3);
+    }
+}
+
+@keyframes rotateBackground {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.otp-box * {
+    animation: fadeIn 0.5s ease-out forwards;
+}

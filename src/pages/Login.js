@@ -4,73 +4,92 @@ import { useNavigate } from "react-router-dom";
 import "../styles/Login.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
-function Login({ setCompanyName }) { // ✅ Accept setCompanyName as a prop
+function Login({ setCompanyName }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [message, setMessage] = useState("");
+    const [messageType, setMessageType] = useState("");
+    const [loginSuccess, setLoginSuccess] = useState(false);
     const navigate = useNavigate();
 
-    const handleLogin = async () => {
+    const handleLogin = async (e) => {
+        e.preventDefault();
         try {
-            console.log("Logging in with email:", email);
-    
-            const res = await axios.post("http://localhost:5000/login", { email, password });
-            if (res.data.success) {
-                console.log("Login successful, fetching user details for email:", email);
-    
-                // ✅ Pass email and userName to Chatbot.js
-                const userRes = await axios.get(`http://localhost:5000/get-user?email=${email}`);
-                console.log("Fetched user details:", userRes.data);
-    
-                if (userRes.data && userRes.data.user_name) {
-                    navigate("/chatbot", {
+            const response = await axios.post('http://localhost:5000/login', {
+                email: email,
+                password: password
+            });
+
+            if (response.data.success) {
+                // Store credentials in localStorage
+                localStorage.setItem('userEmail', email);
+                localStorage.setItem('userName', response.data.company_name);
+
+                // Show success animation
+                setLoginSuccess(true);
+
+                // Navigate after animation
+                setTimeout(() => {
+                    navigate('/chatbot', {
                         state: {
-                            userName: userRes.data.user_name,
-                            email: email // ✅ Pass email as well
+                            email: email,
+                            userName: response.data.company_name
                         }
                     });
-                } else {
-                    console.error("User name not found in response");
-                }
-            } else {
-                setMessage(res.data.error);
+                }, 2000);
             }
         } catch (error) {
-            console.error("Login error:", error);
-            setMessage("Login failed. Please try again.");
+            setMessage(error.response?.data?.error || "Login failed");
+            setMessageType("error");
         }
     };
-    
+
     return (
         <div className="auth-background">
-            <div className="auth-container">
+            <div className={`auth-container ${loginSuccess ? 'page-transition' : ''}`}>
                 <h2 className="auth-title">Company Login</h2>
-                <input 
-                    type="email" 
-                    placeholder="Company Email" 
-                    value={email} 
-                    onChange={(e) => setEmail(e.target.value)} 
-                    required
-                />
-                <div className="password-container">
+
+                <form onSubmit={handleLogin}>
                     <input 
-                        type={showPassword ? "text" : "password"} 
-                        placeholder="Password" 
-                        value={password} 
-                        onChange={(e) => setPassword(e.target.value)} 
-                        required
+                        type="email" 
+                        placeholder="Company Email" 
+                        value={email} 
+                        onChange={(e) => setEmail(e.target.value)} 
+                        required 
                     />
-                    <button 
-                        type="button" 
-                        className="view-password-btn" 
-                        onClick={() => setShowPassword(!showPassword)}
-                    >
-                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+
+                    <div className="password-container">
+                        <input 
+                            type={showPassword ? "text" : "password"} 
+                            placeholder="Password" 
+                            value={password} 
+                            onChange={(e) => setPassword(e.target.value)} 
+                            required 
+                        />
+                        <button 
+                            type="button" 
+                            className="view-password-btn" 
+                            onClick={() => setShowPassword(!showPassword)}
+                        >
+                            {showPassword ? <FaEyeSlash /> : <FaEye />}
+                        </button>
+                    </div>
+
+                    <button type="submit" className="auth-btn">
+                        Login
                     </button>
-                </div>
-                <button onClick={handleLogin} className="auth-btn">Login</button>
-                {message && <p className="error-message">{message}</p>}
+                </form>
+
+                {message && <p className={`message ${messageType}`}>{message}</p>}
+
+                {loginSuccess && (
+                    <div className="login-success">
+                        <div className="success-icon"></div>
+                        <div className="success-text">Login Successful!</div>
+                        <div className="redirect-text">Welcome back!</div>
+                    </div>
+                )}
             </div>
         </div>
     );

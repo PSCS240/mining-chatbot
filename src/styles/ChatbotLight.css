@@ -68,6 +68,20 @@
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
+.light-theme .main-heading {
+  color: #000000;
+  font-weight: 800;
+  font-size: 1.5rem;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+.light-theme .header-title {
+  color: #000000;
+  font-weight: 800;
+  font-size: 1.25rem;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
 .light-theme .history-item {
   background-color: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -138,4 +152,24 @@
 
 .light-theme .delete-chat-button:hover {
   background-color: #dc2626;
+}
+
+.light-theme .message-filter {
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #000000;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.light-theme .message-filter:hover {
+  background-color: #f9fafb;
+  border-color: #3b82f6;
+}
+
+.light-theme .filter-active {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
 }
